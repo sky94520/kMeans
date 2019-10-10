@@ -74,6 +74,8 @@ def kMeans(data_set, k, distance_measure=euclidean_distance, create_centroids=ra
         for cent in range(k):
             # 获取属于该簇的所有点
             ptsInClust = data_set[nonzero(cluster_assment[:, 0].A == cent)[0]]
+            if len(ptsInClust) == 0:
+                continue
             # 按矩阵的列进行均值计算
             centroids[cent, :] = mean(ptsInClust, axis=0)
         # 显示每一次迭代后的簇的情况
