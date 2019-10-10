@@ -69,35 +69,44 @@ def kMeans(data_set, k, distance_measure=euclidean_distance, create_centroids=ra
                 cluster_changed = True
             # 不断更新最小值
             cluster_assment[i, :] = min_index, min_dist ** 2
-        print(centroids)
+        # print(centroids)
         # 更新质心
         for cent in range(k):
             # 获取属于该簇的所有点
-            ptsInClust = data_set[nonzero(cluster_assment[:, 0].A==cent)[0]]
+            ptsInClust = data_set[nonzero(cluster_assment[:, 0].A == cent)[0]]
             # 按矩阵的列进行均值计算
             centroids[cent, :] = mean(ptsInClust, axis=0)
         # 显示每一次迭代后的簇的情况
         # show_image(data_set, centroids, cluster_assment)
+
     return centroids, cluster_assment
 
 
 def binary_kmeans(data_set, k, distance_measure=euclidean_distance):
+    """
+    二分 K-均值算法
+    :param data_set: 样本集
+    :param k: 要划分的簇的数量
+    :param distance_measure: 距离计算函数
+    :return: 返回同kMeans()函数
+    """
     m = shape(data_set)[0]
     cluster_assment = mat(zeros((m, 2)))
     # 按照列求平均数并转换成列表
     centroid0 = mean(data_set, axis=0).tolist()[0]
     # 划分的簇
     cent_list = [centroid0]
-    # 计算当前簇的误差
+    # 计算点到当前簇的误差
     for j in range(m):
-        cluster_assment[j, 1] = distance_measure(mat(centroid0), data_set[j, :])**2
+        cluster_assment[j, 1] = distance_measure(mat(centroid0), data_set[j, :]) ** 2
     # 划分的簇小于选定值时 继续划分
     while len(cent_list) < k:
         lowestSSE = inf
+        # 找到一个划分后SSE最小的簇
         for i in range(len(cent_list)):
             # 获取该簇的所有数据
             ptsInCurrCluster = data_set[nonzero(cluster_assment[:, 0].A == i)[0], :]
-            # 进行划分
+            # 经过划分 一个簇得到编号分别为0和1的两个簇
             centroidMat, splitClustAss = kMeans(ptsInCurrCluster, 2, distance_measure)
             # 计算分簇之后的Sum of Square Error
             sseSplit = sum(splitClustAss[:, 1])
@@ -109,6 +118,7 @@ def binary_kmeans(data_set, k, distance_measure=euclidean_distance):
                 bestNewCents = centroidMat
                 bestClustAss = splitClustAss.copy()
                 lowestSSE = sseSplit + sseNotSplit
+        # 重新编排编号
         bestClustAss[nonzero(bestClustAss[:, 0].A == 1)[0], 0] = len(cent_list)
         bestClustAss[nonzero(bestClustAss[:, 0].A == 0)[0], 0] = bestCentToSplit
 
@@ -117,13 +127,15 @@ def binary_kmeans(data_set, k, distance_measure=euclidean_distance):
         cent_list[bestCentToSplit] = bestNewCents.tolist()[0]
         cent_list.append(bestNewCents.tolist()[1])
         cluster_assment[nonzero(cluster_assment[:, 0].A == bestCentToSplit)[0], :] = bestClustAss
+        # 显示每一次迭代后的簇的情况
+        show_image(data_set, mat(cent_list), cluster_assment)
 
     return mat(cent_list), cluster_assment
 
 
 def main2():
     data_mat = mat(load_data_set('testSet2.txt'))
-    centroids, clustAssing = binary_kmeans(data_mat, 3)
+    centroids, clustAssing = binary_kmeans(data_mat, 8)
     print('----')
     # print(clustAssing)
     show_image(data_mat, centroids, clustAssing)
@@ -132,23 +144,24 @@ def main2():
 def main1():
     data_mat = mat(load_data_set('testSet.txt'))
     centroids, clustAssing = kMeans(data_mat, 4)
+    plt.show()
     print('----')
     # print(clustAssing)
     show_image(data_mat, centroids, clustAssing)
+    plt.show()
 
 
 def show_image(data_set, centroids, clustAssing):
-    sign = 'osp*'
-    color = 'bgrc'
+    colors = 'bgrcmykb'
+    markers = 'osDv^p*+'
     for index in range(len(clustAssing)):
         datum = data_set[index]
-        print(datum, datum[:, 0], datum[:, 1])
         j = int(clustAssing[index, 0])
-        flag = sign[j] + color[j]
+        flag = markers[j] + colors[j]
         plt.plot(datum[:, 0], datum[:, 1], flag)
     # 质心
     plt.plot(centroids[:, 0], centroids[:, 1], '+k')
-    plt.show()
+    # plt.show()
 
 
 def distSLC(vecA, vecB):  # Spherical Law of Cosines
